@@ -24,11 +24,12 @@ from .file_utils import FileUtils
 from .craft_utils import CraftUtils
 
 
-
 class CRAFTTextDetector:
 
     def __init__(self):
-        self.args = ConfigureCRAFTPytorch(trained_model='weights/craft_ic15_20k.pth', test_folder='books_images')
+        self.args = ConfigureCRAFTPytorch(
+            trained_model= '../../neural_networks/CRAFT/craft_ic15_20k.pth',
+            test_folder='books_images')
         """ For test images in a folder """
         self.file_utils = FileUtils()
         self.craft_utils = CraftUtils()
