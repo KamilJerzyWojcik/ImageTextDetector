@@ -36,7 +36,7 @@ class CRAFTTextDetector:
         self.image_list, _, _ = self.file_utils.get_files(self.args.test_folder)
         self.imgproc = ImgProc()
 
-        self.result_folder = './result/'
+        self.result_folder = './result'
         if not os.path.isdir(self.result_folder):
             os.mkdir(self.result_folder)
 
