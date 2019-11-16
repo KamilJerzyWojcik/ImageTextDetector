@@ -1,4 +1,4 @@
-from .CRAFT_pytorch.test import CRAFTTextDetector
+from CRAFT_pytorch.test import CRAFTTextDetector
 
 class ImageTestDetector:
     def __init__ (self):
