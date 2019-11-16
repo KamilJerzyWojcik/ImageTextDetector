@@ -231,10 +231,10 @@ class CraftUtils:
         return polys
 
     def getDetBoxes(self, textmap, linkmap, text_threshold, link_threshold, low_text, poly=False):
-        boxes, labels, mapper = getDetBoxes_core(textmap, linkmap, text_threshold, link_threshold, low_text)
+        boxes, labels, mapper = self.getDetBoxes_core(textmap, linkmap, text_threshold, link_threshold, low_text)
 
         if poly:
-            polys = getPoly_core(boxes, labels, mapper, linkmap)
+            polys = self.getPoly_core(boxes, labels, mapper, linkmap)
         else:
             polys = [None] * len(boxes)
 
