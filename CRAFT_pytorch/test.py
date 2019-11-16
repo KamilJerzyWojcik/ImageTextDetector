@@ -13,12 +13,12 @@ from PIL import Image
 import cv2
 from skimage import io
 import numpy as np
-import imgproc
 import json
 import zipfile
 from collections import OrderedDict
 
 from .configure_craft_pytorch import ConfigureCRAFTPytorch
+import imgproc
 from craft import CRAFT
 import file_utils
 import craft_utils
