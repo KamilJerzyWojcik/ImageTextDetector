@@ -28,7 +28,7 @@ class CRAFTTextDetector:
 
     def __init__(self):
         self.args = ConfigureCRAFTPytorch(
-            trained_model= '../../neural_networks/CRAFT/craft_ic15_20k.pth',
+            trained_model= '../neural_networks/CRAFT/craft_ic15_20k.pth',
             test_folder='books_images')
         """ For test images in a folder """
         self.file_utils = FileUtils()
