@@ -18,7 +18,7 @@ import zipfile
 from collections import OrderedDict
 
 from .configure_craft_pytorch import ConfigureCRAFTPytorch
-import imgproc
+from .imgproc import ImgProc
 from craft import CRAFT
 import file_utils
 import craft_utils
@@ -31,6 +31,7 @@ class CRAFTTextDetector:
         self.args = ConfigureCRAFTPytorch(trained_model='weights/craft_ic15_20k.pth', test_folder='books_images')
         """ For test images in a folder """
         self.image_list, _, _ = file_utils.get_files(self.args.test_folder)
+        self.imgproc = ImgProc()
 
         self.result_folder = './result/'
         if not os.path.isdir(self.result_folder):
