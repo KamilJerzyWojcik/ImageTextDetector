@@ -5,9 +5,7 @@ import cv2
 
 # borrowed from https://github.com/lengstrom/fast-style-transfer/blob/master/src/utils.py
 
-class FilrUtils:
-    def __init__(self):
-        pass
+class FileUtils:
 
     def get_files(self, img_dir):
         imgs, masks, xmls = self.list_files(img_dir)

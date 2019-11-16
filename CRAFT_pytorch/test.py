@@ -20,7 +20,7 @@ from collections import OrderedDict
 from .configure_craft_pytorch import ConfigureCRAFTPytorch
 from .imgproc import ImgProc
 from .craft import CRAFT
-from .file_utils import FilrUtils
+from .file_utils import FileUtils
 from .craft_utils import CraftUtils
 
 
@@ -30,7 +30,7 @@ class CRAFTTextDetector:
     def __init__(self):
         self.args = ConfigureCRAFTPytorch(trained_model='weights/craft_ic15_20k.pth', test_folder='books_images')
         """ For test images in a folder """
-        self.file_utils = FilrUtils()
+        self.file_utils = FileUtils()
         self.craft_utils = CraftUtils()
         self.image_list, _, _ = self.file_utils.get_files(self.args.test_folder)
         self.imgproc = ImgProc()
