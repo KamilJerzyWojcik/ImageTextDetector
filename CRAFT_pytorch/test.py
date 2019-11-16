@@ -18,7 +18,7 @@ import json
 import zipfile
 from collections import OrderedDict
 
-from configure_craft_pytorch import ConfigureCRAFTPytorch
+from .configure_craft_pytorch import ConfigureCRAFTPytorch
 from craft import CRAFT
 import file_utils
 import craft_utils
