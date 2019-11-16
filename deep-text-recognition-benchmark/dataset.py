@@ -12,6 +12,7 @@ import numpy as np
 from torch.utils.data import Dataset, ConcatDataset, Subset
 from torch._utils import _accumulate
 import torchvision.transforms as transforms
+from IPython.core.display import display
 
 
 class Batch_Balanced_Dataset(object):
@@ -22,8 +23,8 @@ class Batch_Balanced_Dataset(object):
         For example, when select_data is "MJ-ST" and batch_ratio is "0.5-0.5",
         the 50% of the batch is filled with MJ and the other 50% of the batch is filled with ST.
         """
-        print('-' * 80)
-        print(f'dataset_root: {opt.train_data}\nopt.select_data: {opt.select_data}\nopt.batch_ratio: {opt.batch_ratio}')
+        display('-' * 80)
+        display(f'dataset_root: {opt.train_data}\nopt.select_data: {opt.select_data}\nopt.batch_ratio: {opt.batch_ratio}')
         assert len(opt.select_data) == len(opt.batch_ratio)
 
         _AlignCollate = AlignCollate(imgH=opt.imgH, imgW=opt.imgW, keep_ratio_with_pad=opt.PAD)
@@ -33,7 +34,7 @@ class Batch_Balanced_Dataset(object):
         Total_batch_size = 0
         for selected_d, batch_ratio_d in zip(opt.select_data, opt.batch_ratio):
             _batch_size = max(round(opt.batch_size * float(batch_ratio_d)), 1)
-            print('-' * 80)
+            display('-' * 80)
             _dataset = hierarchical_dataset(root=opt.train_data, opt=opt, select_data=[selected_d])
             total_number_dataset = len(_dataset)
 
@@ -47,8 +48,8 @@ class Batch_Balanced_Dataset(object):
             indices = range(total_number_dataset)
             _dataset, _ = [Subset(_dataset, indices[offset - length:offset])
                            for offset, length in zip(_accumulate(dataset_split), dataset_split)]
-            print(f'num total samples of {selected_d}: {total_number_dataset} x {opt.total_data_usage_ratio} (total_data_usage_ratio) = {len(_dataset)}')
-            print(f'num samples of {selected_d} per batch: {opt.batch_size} x {float(batch_ratio_d)} (batch_ratio) = {_batch_size}')
+            display(f'num total samples of {selected_d}: {total_number_dataset} x {opt.total_data_usage_ratio} (total_data_usage_ratio) = {len(_dataset)}')
+            display(f'num samples of {selected_d} per batch: {opt.batch_size} x {float(batch_ratio_d)} (batch_ratio) = {_batch_size}')
             batch_size_list.append(str(_batch_size))
             Total_batch_size += _batch_size
 
@@ -59,10 +60,10 @@ class Batch_Balanced_Dataset(object):
                 collate_fn=_AlignCollate, pin_memory=True)
             self.data_loader_list.append(_data_loader)
             self.dataloader_iter_list.append(iter(_data_loader))
-        print('-' * 80)
-        print('Total_batch_size: ', '+'.join(batch_size_list), '=', str(Total_batch_size))
+        display('-' * 80)
+        display('Total_batch_size: ', '+'.join(batch_size_list), '=', str(Total_batch_size))
         opt.batch_size = Total_batch_size
-        print('-' * 80)
+        display('-' * 80)
 
     def get_batch(self):
         balanced_batch_images = []
@@ -89,7 +90,7 @@ class Batch_Balanced_Dataset(object):
 def hierarchical_dataset(root, opt, select_data='/'):
     """ select_data='/' contains all sub-directory of root directory """
     dataset_list = []
-    print(f'dataset_root:    {root}\t dataset: {select_data[0]}')
+    display(f'dataset_root:    {root}\t dataset: {select_data[0]}')
     for dirpath, dirnames, filenames in os.walk(root+'/'):
         if not dirnames:
             select_flag = False
@@ -100,7 +101,7 @@ def hierarchical_dataset(root, opt, select_data='/'):
 
             if select_flag:
                 dataset = LmdbDataset(dirpath, opt)
-                print(f'sub-directory:\t/{os.path.relpath(dirpath, root)}\t num samples: {len(dataset)}')
+                display(f'sub-directory:\t/{os.path.relpath(dirpath, root)}\t num samples: {len(dataset)}')
                 dataset_list.append(dataset)
 
     concatenated_dataset = ConcatDataset(dataset_list)
@@ -116,7 +117,7 @@ class LmdbDataset(Dataset):
         self.opt = opt
         self.env = lmdb.open(root, max_readers=32, readonly=True, lock=False, readahead=False, meminit=False)
         if not self.env:
-            print('cannot create lmdb from %s' % (root))
+            display('cannot create lmdb from %s' % (root))
             sys.exit(0)
 
         with self.env.begin(write=False) as txn:
@@ -139,7 +140,7 @@ class LmdbDataset(Dataset):
                     label = txn.get(label_key).decode('utf-8')
 
                     if len(label) > self.opt.batch_max_length:
-                        # print(f'The length of the label is longer than max_length: length
+                        # display(f'The length of the label is longer than max_length: length
                         # {len(label)}, {label} in dataset {self.root}')
                         continue
 
@@ -176,7 +177,7 @@ class LmdbDataset(Dataset):
                     img = Image.open(buf).convert('L')
 
             except IOError:
-                print(f'Corrupted image for {index}')
+                display(f'Corrupted image for {index}')
                 # make dummy image and dummy label for corrupted image.
                 if self.opt.rgb:
                     img = Image.new('RGB', (self.opt.imgW, self.opt.imgH))
@@ -221,7 +222,7 @@ class RawDataset(Dataset):
                 img = Image.open(self.image_path_list[index]).convert('L')
 
         except IOError:
-            print(f'Corrupted image for {index}')
+            display(f'Corrupted image for {index}')
             # make dummy image and dummy label for corrupted image.
             if self.opt.rgb:
                 img = Image.new('RGB', (self.opt.imgW, self.opt.imgH))

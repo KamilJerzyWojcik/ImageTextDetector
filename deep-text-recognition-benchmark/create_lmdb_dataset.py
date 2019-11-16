@@ -4,7 +4,7 @@ import fire
 import os
 import lmdb
 import cv2
-
+from IPython.core.display import display
 import numpy as np
 
 
@@ -52,17 +52,17 @@ def createDataset(inputPath, gtFile, outputPath, checkValid=True):
         #     continue
 
         if not os.path.exists(imagePath):
-            print('%s does not exist' % imagePath)
+            display('%s does not exist' % imagePath)
             continue
         with open(imagePath, 'rb') as f:
             imageBin = f.read()
         if checkValid:
             try:
                 if not checkImageIsValid(imageBin):
-                    print('%s is not a valid image' % imagePath)
+                    display('%s is not a valid image' % imagePath)
                     continue
             except:
-                print('error occured', i)
+                display('error occured', i)
                 with open(outputPath + '/error_image_log.txt', 'a') as log:
                     log.write('%s-th image data occured error\n' % str(i))
                 continue
@@ -75,12 +75,12 @@ def createDataset(inputPath, gtFile, outputPath, checkValid=True):
         if cnt % 1000 == 0:
             writeCache(env, cache)
             cache = {}
-            print('Written %d / %d' % (cnt, nSamples))
+            display('Written %d / %d' % (cnt, nSamples))
         cnt += 1
     nSamples = cnt-1
     cache['num-samples'.encode()] = str(nSamples).encode()
     writeCache(env, cache)
-    print('Created dataset with %d samples' % nSamples)
+    display('Created dataset with %d samples' % nSamples)
 
 
 if __name__ == '__main__':

@@ -11,6 +11,7 @@ import torch.nn.init as init
 import torch.optim as optim
 import torch.utils.data
 import numpy as np
+from IPython.core.display import display
 
 from utils import CTCLabelConverter, AttnLabelConverter, Averager
 from dataset import hierarchical_dataset, AlignCollate, Batch_Balanced_Dataset
@@ -22,8 +23,8 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 def train(opt):
     """ dataset preparation """
     if not opt.data_filtering_off:
-        print('Filtering the images containing characters which are not in opt.character')
-        print('Filtering the images whose label is longer than opt.batch_max_length')
+        display('Filtering the images containing characters which are not in opt.character')
+        display('Filtering the images whose label is longer than opt.batch_max_length')
         # see https://github.com/clovaai/deep-text-recognition-benchmark/blob/master/dataset.py#L130
 
     opt.select_data = opt.select_data.split('-')
@@ -37,7 +38,7 @@ def train(opt):
         shuffle=True,  # 'True' to check training progress with validation function.
         num_workers=int(opt.workers),
         collate_fn=AlignCollate_valid, pin_memory=True)
-    print('-' * 80)
+    display('-' * 80)
 
     """ model configuration """
     if 'CTC' in opt.Prediction:
@@ -49,14 +50,14 @@ def train(opt):
     if opt.rgb:
         opt.input_channel = 3
     model = Model(opt)
-    print('model input parameters', opt.imgH, opt.imgW, opt.num_fiducial, opt.input_channel, opt.output_channel,
+    display('model input parameters', opt.imgH, opt.imgW, opt.num_fiducial, opt.input_channel, opt.output_channel,
           opt.hidden_size, opt.num_class, opt.batch_max_length, opt.Transformation, opt.FeatureExtraction,
           opt.SequenceModeling, opt.Prediction)
 
     # weight initialization
     for name, param in model.named_parameters():
         if 'localization_fc2' in name:
-            print(f'Skip {name} as it is already initialized')
+            display(f'Skip {name} as it is already initialized')
             continue
         try:
             if 'bias' in name:
@@ -72,13 +73,13 @@ def train(opt):
     model = torch.nn.DataParallel(model).to(device)
     model.train()
     if opt.saved_model != '':
-        print(f'loading pretrained model from {opt.saved_model}')
+        display(f'loading pretrained model from {opt.saved_model}')
         if opt.FT:
             model.load_state_dict(torch.load(opt.saved_model), strict=False)
         else:
             model.load_state_dict(torch.load(opt.saved_model))
-    print("Model:")
-    print(model)
+    display("Model:")
+    display(model)
 
     """ setup loss """
     if 'CTC' in opt.Prediction:
@@ -94,33 +95,33 @@ def train(opt):
     for p in filter(lambda p: p.requires_grad, model.parameters()):
         filtered_parameters.append(p)
         params_num.append(np.prod(p.size()))
-    print('Trainable params num : ', sum(params_num))
-    # [print(name, p.numel()) for name, p in filter(lambda p: p[1].requires_grad, model.named_parameters())]
+    display('Trainable params num : ', sum(params_num))
+    # [display(name, p.numel()) for name, p in filter(lambda p: p[1].requires_grad, model.named_parameters())]
 
     # setup optimizer
     if opt.adam:
         optimizer = optim.Adam(filtered_parameters, lr=opt.lr, betas=(opt.beta1, 0.999))
     else:
         optimizer = optim.Adadelta(filtered_parameters, lr=opt.lr, rho=opt.rho, eps=opt.eps)
-    print("Optimizer:")
-    print(optimizer)
+    display("Optimizer:")
+    display(optimizer)
 
     """ final options """
-    # print(opt)
+    # display(opt)
     with open(f'./saved_models/{opt.experiment_name}/opt.txt', 'a') as opt_file:
         opt_log = '------------ Options -------------\n'
         args = vars(opt)
         for k, v in args.items():
             opt_log += f'{str(k)}: {str(v)}\n'
         opt_log += '---------------------------------------\n'
-        print(opt_log)
+        display(opt_log)
         opt_file.write(opt_log)
 
     """ start training """
     start_iter = 0
     if opt.saved_model != '':
         start_iter = int(opt.saved_model.split('_')[-1].split('.')[0])
-        print(f'continue to train, start_iter: {start_iter}')
+        display(f'continue to train, start_iter: {start_iter}')
 
     start_time = time.time()
     best_accuracy = -1
@@ -176,12 +177,12 @@ def train(opt):
 
                 # training loss and validation loss
                 loss_log = f'[{i}/{opt.num_iter}] Train loss: {loss_avg.val():0.5f}, Valid loss: {valid_loss:0.5f}, Elapsed_time: {elapsed_time:0.5f}'
-                print(loss_log)
+                display(loss_log)
                 log.write(loss_log + '\n')
                 loss_avg.reset()
 
                 current_model_log = f'{"Current_accuracy":17s}: {current_accuracy:0.3f}, {"Current_norm_ED":17s}: {current_norm_ED:0.2f}'
-                print(current_model_log)
+                display(current_model_log)
                 log.write(current_model_log + '\n')
 
                 # keep best accuracy model (on valid dataset)
@@ -192,22 +193,22 @@ def train(opt):
                     best_norm_ED = current_norm_ED
                     torch.save(model.state_dict(), f'./saved_models/{opt.experiment_name}/best_norm_ED.pth')
                 best_model_log = f'{"Best_accuracy":17s}: {best_accuracy:0.3f}, {"Best_norm_ED":17s}: {best_norm_ED:0.2f}'
-                print(best_model_log)
+                display(best_model_log)
                 log.write(best_model_log + '\n')
 
                 # show some predicted results
-                print('-' * 80)
-                print(f'{"Ground Truth":25s} | {"Prediction":25s} | Confidence Score & T/F')
+                display('-' * 80)
+                display(f'{"Ground Truth":25s} | {"Prediction":25s} | Confidence Score & T/F')
                 log.write(f'{"Ground Truth":25s} | {"Prediction":25s} | {"Confidence Score"}\n')
-                print('-' * 80)
+                display('-' * 80)
                 for gt, pred, confidence in zip(labels[:5], preds[:5], confidence_score[:5]):
                     if 'Attn' in opt.Prediction:
                         gt = gt[:gt.find('[s]')]
                         pred = pred[:pred.find('[s]')]
 
-                    print(f'{gt:25s} | {pred:25s} | {confidence:0.4f}\t{str(pred == gt)}')
+                    display(f'{gt:25s} | {pred:25s} | {confidence:0.4f}\t{str(pred == gt)}')
                     log.write(f'{gt:25s} | {pred:25s} | {confidence:0.4f}\t{str(pred == gt)}\n')
-                print('-' * 80)
+                display('-' * 80)
 
         # save model per 1e+5 iter.
         if (i + 1) % 1e+5 == 0:
@@ -215,7 +216,7 @@ def train(opt):
                 model.state_dict(), f'./saved_models/{opt.experiment_name}/iter_{i+1}.pth')
 
         if i == opt.num_iter:
-            print('end the training')
+            display('end the training')
             sys.exit()
         i += 1
 
@@ -269,17 +270,17 @@ if __name__ == '__main__':
     if not opt.experiment_name:
         opt.experiment_name = f'{opt.Transformation}-{opt.FeatureExtraction}-{opt.SequenceModeling}-{opt.Prediction}'
         opt.experiment_name += f'-Seed{opt.manualSeed}'
-        # print(opt.experiment_name)
+        # display(opt.experiment_name)
 
     os.makedirs(f'./saved_models/{opt.experiment_name}', exist_ok=True)
 
     """ vocab / character number configuration """
     if opt.sensitive:
         # opt.character += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-        opt.character = string.printable[:-6]  # same with ASTER setting (use 94 char).
+        opt.character = string.displayable[:-6]  # same with ASTER setting (use 94 char).
 
     """ Seed and GPU setting """
-    # print("Random Seed: ", opt.manualSeed)
+    # display("Random Seed: ", opt.manualSeed)
     random.seed(opt.manualSeed)
     np.random.seed(opt.manualSeed)
     torch.manual_seed(opt.manualSeed)
@@ -288,18 +289,18 @@ if __name__ == '__main__':
     cudnn.benchmark = True
     cudnn.deterministic = True
     opt.num_gpu = torch.cuda.device_count()
-    # print('device count', opt.num_gpu)
+    # display('device count', opt.num_gpu)
     if opt.num_gpu > 1:
-        print('------ Use multi-GPU setting ------')
-        print('if you stuck too long time with multi-GPU setting, try to set --workers 0')
+        display('------ Use multi-GPU setting ------')
+        display('if you stuck too long time with multi-GPU setting, try to set --workers 0')
         # check multi-GPU issue https://github.com/clovaai/deep-text-recognition-benchmark/issues/1
         opt.workers = opt.workers * opt.num_gpu
         opt.batch_size = opt.batch_size * opt.num_gpu
 
         """ previous version
-        print('To equlize batch stats to 1-GPU setting, the batch_size is multiplied with num_gpu and multiplied batch_size is ', opt.batch_size)
+        display('To equlize batch stats to 1-GPU setting, the batch_size is multiplied with num_gpu and multiplied batch_size is ', opt.batch_size)
         opt.batch_size = opt.batch_size * opt.num_gpu
-        print('To equalize the number of epochs to 1-GPU setting, num_iter is divided with num_gpu by default.')
+        display('To equalize the number of epochs to 1-GPU setting, num_iter is divided with num_gpu by default.')
         If you dont care about it, just commnet out these line.)
         opt.num_iter = int(opt.num_iter / opt.num_gpu)
         """

@@ -9,6 +9,7 @@ import torch.utils.data
 import torch.nn.functional as F
 import numpy as np
 from nltk.metrics.distance import edit_distance
+from IPython.core.display import display
 
 from utils import CTCLabelConverter, AttnLabelConverter, Averager
 from dataset import hierarchical_dataset, AlignCollate
@@ -31,7 +32,7 @@ def benchmark_all_eval(model, criterion, converter, opt, calculate_infer_time=Fa
     total_forward_time = 0
     total_evaluation_data_number = 0
     total_correct_number = 0
-    print('-' * 80)
+    display('-' * 80)
     for eval_data in eval_data_list:
         eval_data_path = os.path.join(opt.eval_data, eval_data)
         AlignCollate_evaluation = AlignCollate(imgH=opt.imgH, imgW=opt.imgW, keep_ratio_with_pad=opt.PAD)
@@ -48,8 +49,8 @@ def benchmark_all_eval(model, criterion, converter, opt, calculate_infer_time=Fa
         total_forward_time += infer_time
         total_evaluation_data_number += len(eval_data)
         total_correct_number += accuracy_by_best_model * length_of_data
-        print('Acc %0.3f\t normalized_ED %0.3f' % (accuracy_by_best_model, norm_ED_by_best_model))
-        print('-' * 80)
+        display('Acc %0.3f\t normalized_ED %0.3f' % (accuracy_by_best_model, norm_ED_by_best_model))
+        display('-' * 80)
 
     averaged_forward_time = total_forward_time / total_evaluation_data_number * 1000
     total_accuracy = total_correct_number / total_evaluation_data_number
@@ -60,7 +61,7 @@ def benchmark_all_eval(model, criterion, converter, opt, calculate_infer_time=Fa
         evaluation_log += f'{name}: {accuracy}\t'
     evaluation_log += f'total_accuracy: {total_accuracy:0.3f}\t'
     evaluation_log += f'averaged_infer_time: {averaged_forward_time:0.3f}\t# parameters: {params_num/1e6:0.3f}'
-    print(evaluation_log)
+    display(evaluation_log)
     with open(f'./result/{opt.experiment_name}/log_all_evaluation.txt', 'a') as log:
         log.write(evaluation_log + '\n')
 
@@ -140,7 +141,7 @@ def validation(model, criterion, evaluation_loader, converter, opt):
             except:
                 confidence_score = 0  # for empty pred case, when prune after "end of sentence" token ([s])
             confidence_score_list.append(confidence_score)
-            # print(pred, gt, pred==gt, confidence_score)
+            # display(pred, gt, pred==gt, confidence_score)
 
     accuracy = n_correct / float(length_of_data) * 100
 
@@ -158,16 +159,16 @@ def test(opt):
     if opt.rgb:
         opt.input_channel = 3
     model = Model(opt)
-    print('model input parameters', opt.imgH, opt.imgW, opt.num_fiducial, opt.input_channel, opt.output_channel,
+    display('model input parameters', opt.imgH, opt.imgW, opt.num_fiducial, opt.input_channel, opt.output_channel,
           opt.hidden_size, opt.num_class, opt.batch_max_length, opt.Transformation, opt.FeatureExtraction,
           opt.SequenceModeling, opt.Prediction)
     model = torch.nn.DataParallel(model).to(device)
 
     # load model
-    print('loading pretrained model from %s' % opt.saved_model)
+    display('loading pretrained model from %s' % opt.saved_model)
     model.load_state_dict(torch.load(opt.saved_model, map_location=device))
     opt.experiment_name = '_'.join(opt.saved_model.split('/')[1:])
-    # print(model)
+    # display(model)
 
     """ keep evaluation model and result logs """
     os.makedirs(f'./result/{opt.experiment_name}', exist_ok=True)
@@ -195,7 +196,7 @@ def test(opt):
             _, accuracy_by_best_model, _, _, _, _, _, _ = validation(
                 model, criterion, evaluation_loader, converter, opt)
 
-            print(accuracy_by_best_model)
+            display(accuracy_by_best_model)
             with open('./result/{0}/log_evaluation.txt'.format(opt.experiment_name), 'a') as log:
                 log.write(str(accuracy_by_best_model) + '\n')
 
@@ -231,7 +232,7 @@ if __name__ == '__main__':
 
     """ vocab / character number configuration """
     if opt.sensitive:
-        opt.character = string.printable[:-6]  # same with ASTER setting (use 94 char).
+        opt.character = string.displayable[:-6]  # same with ASTER setting (use 94 char).
 
     cudnn.benchmark = True
     cudnn.deterministic = True
