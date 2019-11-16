@@ -16,7 +16,6 @@ import numpy as np
 import json
 import zipfile
 from collections import OrderedDict
-from IPython.core.display import display
 
 
 from .configure_craft_pytorch import ConfigureCRAFTPytorch
@@ -46,7 +45,7 @@ class CRAFTTextDetector:
             # load net
         net = CRAFT()     # initialize
 
-        display('Loading weights from checkpoint (' + self.args.trained_model + ')')
+        print('Loading weights from checkpoint (' + self.args.trained_model + ')')
         if self.args.cuda:
             net.load_state_dict(self.copyStateDict(torch.load(self.args.trained_model)))
         else:
@@ -64,7 +63,7 @@ class CRAFTTextDetector:
         if self.args.refine:
             from refinenet import RefineNet
             refine_net = RefineNet()
-            display('Loading weights of refiner from checkpoint (' + self.args.refiner_model + ')')
+            print('Loading weights of refiner from checkpoint (' + self.args.refiner_model + ')')
             if self.args.cuda:
                 refine_net.load_state_dict(self.copyStateDict(torch.load(self.args.refiner_model)))
                 refine_net = refine_net.cuda()
@@ -79,7 +78,7 @@ class CRAFTTextDetector:
 
         # load data
         for k, image_path in enumerate(self.image_list):
-            display("Test image {:d}/{:d}: {:s}".format(k+1, len(self.image_list), image_path), end='\r')
+            print("Test image {:d}/{:d}: {:s}".format(k+1, len(self.image_list), image_path))
             image = self.imgproc.loadImage(image_path)
 
             bboxes, polys, score_text = self.test_net(net, image, self.args.text_threshold, self.args.link_threshold, self.args.low_text, self.args.cuda, self.args.poly, refine_net)
@@ -91,7 +90,7 @@ class CRAFTTextDetector:
 
             self.file_utils.saveResult(image_path, image[:,:,::-1], polys, dirname=self.result_folder)
 
-        display("elapsed time : {}s".format(time.time() - t))
+        print("elapsed time : {}s".format(time.time() - t))
 
     def copyStateDict(self, state_dict):
         if list(state_dict.keys())[0].startswith("module"):
@@ -149,6 +148,6 @@ class CRAFTTextDetector:
         render_img = np.hstack((render_img, score_link))
         ret_score_text = self.imgproc.cvt2HeatmapImg(render_img)
 
-        if self.args.show_time : display("\ninfer/postproc time : {:.3f}/{:.3f}".format(t0, t1))
+        if self.args.show_time : print("\ninfer/postproc time : {:.3f}/{:.3f}".format(t0, t1))
 
         return boxes, polys, ret_score_text

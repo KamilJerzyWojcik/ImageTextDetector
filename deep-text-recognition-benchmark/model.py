@@ -15,7 +15,6 @@ limitations under the License.
 """
 
 import torch.nn as nn
-from IPython.core.display import display
 
 from modules.transformation import TPS_SpatialTransformerNetwork
 from modules.feature_extraction import VGG_FeatureExtractor, RCNN_FeatureExtractor, ResNet_FeatureExtractor
@@ -36,7 +35,7 @@ class Model(nn.Module):
             self.Transformation = TPS_SpatialTransformerNetwork(
                 F=opt.num_fiducial, I_size=(opt.imgH, opt.imgW), I_r_size=(opt.imgH, opt.imgW), I_channel_num=opt.input_channel)
         else:
-            display('No Transformation module specified')
+            print('No Transformation module specified')
 
         """ FeatureExtraction """
         if opt.FeatureExtraction == 'VGG':
@@ -57,7 +56,7 @@ class Model(nn.Module):
                 BidirectionalLSTM(opt.hidden_size, opt.hidden_size, opt.hidden_size))
             self.SequenceModeling_output = opt.hidden_size
         else:
-            display('No SequenceModeling module specified')
+            print('No SequenceModeling module specified')
             self.SequenceModeling_output = self.FeatureExtraction_output
 
         """ Prediction """

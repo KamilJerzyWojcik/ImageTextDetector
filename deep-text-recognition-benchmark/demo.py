@@ -5,7 +5,6 @@ import torch
 import torch.backends.cudnn as cudnn
 import torch.utils.data
 import torch.nn.functional as F
-from IPython.core.display import display
 
 from utils import CTCLabelConverter, AttnLabelConverter
 from dataset import RawDataset, AlignCollate
@@ -24,13 +23,13 @@ def demo(opt):
     if opt.rgb:
         opt.input_channel = 3
     model = Model(opt)
-    display('model input parameters', opt.imgH, opt.imgW, opt.num_fiducial, opt.input_channel, opt.output_channel,
+    print('model input parameters', opt.imgH, opt.imgW, opt.num_fiducial, opt.input_channel, opt.output_channel,
           opt.hidden_size, opt.num_class, opt.batch_max_length, opt.Transformation, opt.FeatureExtraction,
           opt.SequenceModeling, opt.Prediction)
     model = torch.nn.DataParallel(model).to(device)
 
     # load model
-    display('loading pretrained model from %s' % opt.saved_model)
+    print('loading pretrained model from %s' % opt.saved_model)
     model.load_state_dict(torch.load(opt.saved_model, map_location=device))
 
     # prepare data. two demo images from https://github.com/bgshih/crnn#run-demo
@@ -68,9 +67,9 @@ def demo(opt):
                 _, preds_index = preds.max(2)
                 preds_str = converter.decode(preds_index, length_for_pred)
 
-            display('-' * 80)
-            display(f'{"image_path":25s}\t{"predicted_labels":25s}\tconfidence score')
-            display('-' * 80)
+            print('-' * 80)
+            print(f'{"image_path":25s}\t{"predicted_labels":25s}\tconfidence score')
+            print('-' * 80)
             preds_prob = F.softmax(preds, dim=2)
             preds_max_prob, _ = preds_prob.max(dim=2)
             for img_name, pred, pred_max_prob in zip(image_path_list, preds_str, preds_max_prob):
@@ -82,8 +81,8 @@ def demo(opt):
                 # calculate confidence score (= multiply of pred_max_prob)
                 confidence_score = pred_max_prob.cumprod(dim=0)[-1]
 
-                # display(f'{img_name}\t{pred}\t{confidence_score:0.4f}')
-                display(f'{img_name:25s}\t{pred:25s}\t{confidence_score:0.4f}')
+                # print(f'{img_name}\t{pred}\t{confidence_score:0.4f}')
+                print(f'{img_name:25s}\t{pred:25s}\t{confidence_score:0.4f}')
 
 
 if __name__ == '__main__':
@@ -115,7 +114,7 @@ if __name__ == '__main__':
 
     """ vocab / character number configuration """
     if opt.sensitive:
-        opt.character = string.displayable[:-6]  # same with ASTER setting (use 94 char).
+        opt.character = string.printable[:-6]  # same with ASTER setting (use 94 char).
 
     cudnn.benchmark = True
     cudnn.deterministic = True
