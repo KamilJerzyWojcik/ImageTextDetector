@@ -10,7 +10,7 @@ class FilrUtils:
         pass
 
     def get_files(self, img_dir):
-        imgs, masks, xmls = list_files(img_dir)
+        imgs, masks, xmls = self.list_files(img_dir)
         return imgs, masks, xmls
 
     def list_files(self, in_path):
