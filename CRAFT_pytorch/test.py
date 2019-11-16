@@ -19,9 +19,9 @@ from collections import OrderedDict
 
 from .configure_craft_pytorch import ConfigureCRAFTPytorch
 from .imgproc import ImgProc
-from craft import CRAFT
-import file_utils
-import craft_utils
+from .craft import CRAFT
+from .file_utils import FilrUtils
+from .craft_utils import CraftUtils
 
 
 
@@ -30,7 +30,9 @@ class CRAFTTextDetector:
     def __init__(self):
         self.args = ConfigureCRAFTPytorch(trained_model='weights/craft_ic15_20k.pth', test_folder='books_images')
         """ For test images in a folder """
-        self.image_list, _, _ = file_utils.get_files(self.args.test_folder)
+        self.file_utils = FilrUtils()
+        self.craft_utils = CraftUtils()
+        self.image_list, _, _ = self.file_utils.get_files(self.args.test_folder)
         self.imgproc = ImgProc()
 
         self.result_folder = './result/'
@@ -75,7 +77,7 @@ class CRAFTTextDetector:
         # load data
         for k, image_path in enumerate(self.image_list):
             print("Test image {:d}/{:d}: {:s}".format(k+1, len(self.image_list), image_path), end='\r')
-            image = imgproc.loadImage(image_path)
+            image = self.imgproc.loadImage(image_path)
 
             bboxes, polys, score_text = self.test_net(net, image, self.args.text_threshold, self.args.link_threshold, self.args.low_text, self.args.cuda, self.args.poly, refine_net)
 
@@ -84,7 +86,7 @@ class CRAFTTextDetector:
             mask_file = self.result_folder + "/res_" + filename + '_mask.jpg'
             cv2.imwrite(mask_file, score_text)
 
-            file_utils.saveResult(image_path, image[:,:,::-1], polys, dirname=self.result_folder)
+            self.file_utils.saveResult(image_path, image[:,:,::-1], polys, dirname=self.result_folder)
 
         print("elapsed time : {}s".format(time.time() - t))
 
@@ -103,11 +105,11 @@ class CRAFTTextDetector:
         t0 = time.time()
 
         # resize
-        img_resized, target_ratio, size_heatmap = imgproc.resize_aspect_ratio(image, self.args.canvas_size, interpolation=cv2.INTER_LINEAR, mag_ratio=self.args.mag_ratio)
+        img_resized, target_ratio, size_heatmap = self.imgproc.resize_aspect_ratio(image, self.args.canvas_size, interpolation=cv2.INTER_LINEAR, mag_ratio=self.args.mag_ratio)
         ratio_h = ratio_w = 1 / target_ratio
 
         # preprocessing
-        x = imgproc.normalizeMeanVariance(img_resized)
+        x = self.imgproc.normalizeMeanVariance(img_resized)
         x = torch.from_numpy(x).permute(2, 0, 1)    # [h, w, c] to [c, h, w]
         x = Variable(x.unsqueeze(0))                # [c, h, w] to [b, c, h, w]
         if cuda:
@@ -129,11 +131,11 @@ class CRAFTTextDetector:
         t1 = time.time()
 
         # Post-processing
-        boxes, polys = craft_utils.getDetBoxes(score_text, score_link, text_threshold, link_threshold, low_text, poly)
+        boxes, polys = self.craft_utils.getDetBoxes(score_text, score_link, text_threshold, link_threshold, low_text, poly)
 
         # coordinate adjustment
-        boxes = craft_utils.adjustResultCoordinates(boxes, ratio_w, ratio_h)
-        polys = craft_utils.adjustResultCoordinates(polys, ratio_w, ratio_h)
+        boxes = self.craft_utils.adjustResultCoordinates(boxes, ratio_w, ratio_h)
+        polys = self.craft_utils.adjustResultCoordinates(polys, ratio_w, ratio_h)
         for k in range(len(polys)):
             if polys[k] is None: polys[k] = boxes[k]
 
@@ -142,7 +144,7 @@ class CRAFTTextDetector:
         # render results (optional)
         render_img = score_text.copy()
         render_img = np.hstack((render_img, score_link))
-        ret_score_text = imgproc.cvt2HeatmapImg(render_img)
+        ret_score_text = self.imgproc.cvt2HeatmapImg(render_img)
 
         if self.args.show_time : print("\ninfer/postproc time : {:.3f}/{:.3f}".format(t0, t1))
 

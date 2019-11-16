@@ -6,21 +6,27 @@ import torch.nn.init as init
 from torchvision import models
 from torchvision.models.vgg import model_urls
 
-def init_weights(modules):
-    for m in modules:
-        if isinstance(m, nn.Conv2d):
-            init.xavier_uniform_(m.weight.data)
-            if m.bias is not None:
+
+class WeightsHelper:
+    def __init__(self):
+        pass
+
+    def init_weights(self, modules):
+        for m in modules:
+            if isinstance(m, nn.Conv2d):
+                init.xavier_uniform_(m.weight.data)
+                if m.bias is not None:
+                    m.bias.data.zero_()
+            elif isinstance(m, nn.BatchNorm2d):
+                m.weight.data.fill_(1)
                 m.bias.data.zero_()
-        elif isinstance(m, nn.BatchNorm2d):
-            m.weight.data.fill_(1)
-            m.bias.data.zero_()
-        elif isinstance(m, nn.Linear):
-            m.weight.data.normal_(0, 0.01)
-            m.bias.data.zero_()
+            elif isinstance(m, nn.Linear):
+                m.weight.data.normal_(0, 0.01)
+                m.bias.data.zero_()
 
 class vgg16_bn(torch.nn.Module):
     def __init__(self, pretrained=True, freeze=True):
+        self.weightsHelper = WeightsHelper()
         super(vgg16_bn, self).__init__()
         model_urls['vgg16_bn'] = model_urls['vgg16_bn'].replace('https://', 'http://')
         vgg_pretrained_features = models.vgg16_bn(pretrained=pretrained).features
@@ -46,12 +52,12 @@ class vgg16_bn(torch.nn.Module):
         )
 
         if not pretrained:
-            init_weights(self.slice1.modules())
-            init_weights(self.slice2.modules())
-            init_weights(self.slice3.modules())
-            init_weights(self.slice4.modules())
+            self.weightsHelper.init_weights(self.slice1.modules())
+            self.weightsHelper.init_weights(self.slice2.modules())
+            self.weightsHelper.init_weights(self.slice3.modules())
+            self.weightsHelper.init_weights(self.slice4.modules())
 
-        init_weights(self.slice5.modules())        # no pretrained model for fc6 and fc7
+        self.weightsHelper.init_weights(self.slice5.modules())        # no pretrained model for fc6 and fc7
 
         if freeze:
             for param in self.slice1.parameters():      # only first conv

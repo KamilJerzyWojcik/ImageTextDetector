@@ -8,13 +8,13 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
-from basenet.vgg16_bn import init_weights
+from .basenet.vgg16_bn import WeightsHelper
 
 
 class RefineNet(nn.Module):
     def __init__(self):
         super(RefineNet, self).__init__()
-
+        self.weightsHelper = WeightsHelper()
         self.last_conv = nn.Sequential(
             nn.Conv2d(34, 64, kernel_size=3, padding=1), nn.BatchNorm2d(64), nn.ReLU(inplace=True),
             nn.Conv2d(64, 64, kernel_size=3, padding=1), nn.BatchNorm2d(64), nn.ReLU(inplace=True),
@@ -45,11 +45,11 @@ class RefineNet(nn.Module):
             nn.Conv2d(128, 1, kernel_size=1)
         )
 
-        init_weights(self.last_conv.modules())
-        init_weights(self.aspp1.modules())
-        init_weights(self.aspp2.modules())
-        init_weights(self.aspp3.modules())
-        init_weights(self.aspp4.modules())
+        self.weightsHelper.init_weights(self.last_conv.modules())
+        self.weightsHelper.init_weights(self.aspp1.modules())
+        (self.aspp2.modules())
+        self.weightsHelper.init_weights(self.aspp3.modules())
+        self.weightsHelper.init_weights(self.aspp4.modules())
 
     def forward(self, y, upconv4):
         refine = torch.cat([y.permute(0,3,1,2), upconv4], dim=1)
