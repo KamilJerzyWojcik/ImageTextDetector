@@ -1,0 +1,5 @@
+install torch==0.4.1.post2
+install torchvision==0.2.1
+install opencv-python==3.4.2.17
+install scikit-image==0.14.2
+install scipy==1.1.0
