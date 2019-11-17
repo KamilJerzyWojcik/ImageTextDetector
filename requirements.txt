@@ -3,3 +3,9 @@ install torchvision==0.2.1
 install opencv-python==3.4.2.17
 install scikit-image==0.14.2
 install scipy==1.1.0
+install lmdb
+conda install -c conda-forge python-lmdb
+install pillow 
+install torchvision 
+install nltk 
+install natsort

@@ -230,6 +230,33 @@ class RawDataset(Dataset):
 
         return (img, self.image_path_list[index])
 
+class RawDatasetArray(Dataset):
+    
+    def __init__(self, img_arrays, opt):
+        self.opt = opt
+        self.img_arrays = img_arrays
+
+    def __len__(self):
+        return len(self.img_arrays)
+
+    def __getitem__(self, index):
+
+        try:
+            if self.opt.rgb:
+                img = Image.fromarray(self.img_arrays[index]).convert('RGB')  # for color image
+            else:
+                img = Image.fromarray(self.img_arrays[index] ).convert('L')
+
+        except IOError:
+            print(f'Corrupted image for {index}')
+            # make dummy image and dummy label for corrupted image.
+            if self.opt.rgb:
+                img = Image.new('RGB', (self.opt.imgW, self.opt.imgH))
+            else:
+                img = Image.new('L', (self.opt.imgW, self.opt.imgH))
+
+        return (img, '')
+
 
 class ResizeNormalize(object):
 
