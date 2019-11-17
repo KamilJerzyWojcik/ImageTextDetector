@@ -41,7 +41,61 @@ class CRAFTTextDetector:
         if not os.path.isdir(self.result_folder):
             os.mkdir(self.result_folder)
 
-    def detect(self):
+    def detect_one(self, image_path=None):
+            # load net
+        net = CRAFT()     # initialize
+
+        print('Loading weights from checkpoint (' + self.args.trained_model + ')')
+        if self.args.cuda:
+            net.load_state_dict(self.copyStateDict(torch.load(self.args.trained_model)))
+        else:
+            net.load_state_dict(self.copyStateDict(torch.load(self.args.trained_model, map_location='cpu')))
+
+        if self.args.cuda:
+            net = net.cuda()
+            net = torch.nn.DataParallel(net)
+            cudnn.benchmark = False
+
+        net.eval()
+
+        # LinkRefiner
+        refine_net = None
+        if self.args.refine:
+            from refinenet import RefineNet
+            refine_net = RefineNet()
+            print('Loading weights of refiner from checkpoint (' + self.args.refiner_model + ')')
+            if self.args.cuda:
+                refine_net.load_state_dict(self.copyStateDict(torch.load(self.args.refiner_model)))
+                refine_net = refine_net.cuda()
+                refine_net = torch.nn.DataParallel(refine_net)
+            else:
+                refine_net.load_state_dict(self.copyStateDict(torch.load(self.args.refiner_model, map_location='cpu')))
+
+            refine_net.eval()
+            self.args.poly = True
+
+        t = time.time()
+
+        # load data
+        # for k, image_path in enumerate(self.image_list):
+        print("Test image: {:s}".format(image_path))
+        image = self.imgproc.loadImage(image_path)
+
+        bboxes, polys, score_text = self.test_net(net, image, self.args.text_threshold, self.args.link_threshold, self.args.low_text, self.args.cuda, self.args.poly, refine_net)
+
+        # save score text
+        filename, file_ext = os.path.splitext(os.path.basename(image_path))
+        mask_file = self.result_folder + "/res_" + filename + '_mask.jpg'
+        cv2.imwrite(mask_file, score_text)
+
+        self.file_utils.saveResult(image_path, image[:,:,::-1], polys, dirname=self.result_folder)
+
+        print("elapsed time : {}s".format(time.time() - t))
+        return bboxes
+
+
+    def detect(self, image_path=None):
+        self.image_path = image_path
             # load net
         net = CRAFT()     # initialize
 
