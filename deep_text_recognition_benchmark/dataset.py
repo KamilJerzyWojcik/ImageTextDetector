@@ -255,7 +255,7 @@ class RawDatasetArray(Dataset):
             else:
                 img = Image.new('L', (self.opt.imgW, self.opt.imgH))
 
-        return (img, '')
+        return (img, f'image_{index}')
 
 
 class ResizeNormalize(object):
