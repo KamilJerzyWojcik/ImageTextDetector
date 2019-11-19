@@ -20,3 +20,4 @@ class ConfigureTextRecognition:
         self.output_channel = 512
         self.hidden_size = 256
         self.num_class = 0
+        self.min_confidence_score = 0.8

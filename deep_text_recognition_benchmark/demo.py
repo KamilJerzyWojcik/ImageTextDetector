@@ -78,7 +78,10 @@ class DeepTextRecognition:
                             pred = pred[:pred_EOS]
                             pred_max_prob = pred_max_prob[:pred_EOS]
                         confidence_score = pred_max_prob.cumprod(dim=0)[-1]
-                        results.append(pred)
+
+                        if confidence_score > self.configure_text_recognition.min_confidence_score:
+                            results.append(pred)
+                        
                         print(f'{img_name:25s}\t{pred:25s}\t{confidence_score:0.4f}')
             return results
 
