@@ -12,9 +12,9 @@ class ImageTextDetector:
     
     def get_ordered_words(self, image_path='books_images/book.jpg'):
         boxes, image = self.craft_text_detector.detect_one(image_path=image_path)
-        result, images= self.image_service.get_sorted_phrases_from_image(boxes, image)
+        image_boxes, images= self.image_service.get_sorted_phrases_from_image(boxes, image)
         results = self.deep_text_recognition.get_text_from_image_box(image_arrays = images)
-        return results, image, images
+        return image_boxes, images, results
 
 
     def get_phrases_from_image(self, image_path='books_images/book.jpg'):

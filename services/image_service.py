@@ -138,8 +138,9 @@ class ImageService:
             for word in phrase:
                 x, y, w, h = word
                 img_r = img.copy()
+                # cv2.rectangle(image, (x, y), (x + w, y + h), (255, 0, 0), 5)
                 text_images.append(img_r[y:y+h, x:x+w])
-        return phrases, text_images
+        return image, text_images
 
 
     def get_phrases_from_image(self, boxes, image):
