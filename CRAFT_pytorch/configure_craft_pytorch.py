@@ -6,7 +6,7 @@ class ConfigureCRAFTPytorch:
         self.text_threshold = 0.7
         self.low_text = 0.4
         self.link_threshold = 0.4
-        self.cuda = False
+        self.cuda = True
         self.canvas_size = 1280
         self.mag_ratio = 1.5
         self.poly = False

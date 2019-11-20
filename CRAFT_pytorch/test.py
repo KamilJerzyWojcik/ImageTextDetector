@@ -59,6 +59,8 @@ class CRAFTTextDetector:
         return net
 
     def detect_one(self, image_path=None):
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        os.environ["CUDA_VISIBLE_DEVICES"]="0"
         net = self.get_network()
         t = time.time()
         print("Test image: {:s}".format(image_path))

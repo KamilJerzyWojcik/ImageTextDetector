@@ -12,13 +12,14 @@ from .utils import CTCLabelConverter, AttnLabelConverter
 from .dataset import RawDataset, AlignCollate, RawDatasetArray
 from .model import Model
 from .configure_text_recognition import ConfigureTextRecognition
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-os.environ["CUDA_VISIBLE_DEVICES"]="0"
+
 
 
 class DeepTextRecognition:
 
     def __init__(self):
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        os.environ["CUDA_VISIBLE_DEVICES"]="0"
         self.configure_text_recognition = ConfigureTextRecognition(
             saved_model= '../neural_networks/TextRecognition/TPS-ResNet-BiLSTM-Attn.pth'
         )
