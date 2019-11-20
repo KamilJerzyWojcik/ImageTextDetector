@@ -18,7 +18,7 @@ from .configure_text_recognition import ConfigureTextRecognition
 class DeepTextRecognition:
 
     def __init__(self):
-        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         os.environ["CUDA_VISIBLE_DEVICES"]="0"
         self.configure_text_recognition = ConfigureTextRecognition(
             saved_model= '../neural_networks/TextRecognition/TPS-ResNet-BiLSTM-Attn.pth'
@@ -40,9 +40,9 @@ class DeepTextRecognition:
             converter = self.get_converter()
 
             model = Model(self.configure_text_recognition)
-            model = torch.nn.DataParallel(model).to(device)
+            model = torch.nn.DataParallel(model).to(self.device)
             print('loading pretrained model from %s' % self.configure_text_recognition.saved_model)
-            model.load_state_dict(torch.load(self.configure_text_recognition.saved_model, map_location=device))
+            model.load_state_dict(torch.load(self.configure_text_recognition.saved_model, map_location=self.device))
 
             demo_loader = self.get_demo_loader(image_arrays)
 
@@ -52,9 +52,9 @@ class DeepTextRecognition:
             with torch.no_grad():
                 for image_tensors, image_name in demo_loader:
                     batch_size = image_tensors.size(0)
-                    image = image_tensors.to(device)
-                    length_for_pred = torch.IntTensor([self.configure_text_recognition.batch_max_length] * batch_size).to(device)
-                    text_for_pred = torch.LongTensor(batch_size, self.configure_text_recognition.batch_max_length + 1).fill_(0).to(device)
+                    image = image_tensors.to(self.device)
+                    length_for_pred = torch.IntTensor([self.configure_text_recognition.batch_max_length] * batch_size).to(self.device)
+                    text_for_pred = torch.LongTensor(batch_size, self.configure_text_recognition.batch_max_length + 1).fill_(0).to(self.device)
 
                     if 'CTC' in self.configure_text_recognition.Prediction:
                         preds = model(image, text_for_pred).log_softmax(2)
@@ -124,11 +124,11 @@ class DeepTextRecognition:
             self.configure_text_recognition.input_channel = 3
         
         model = Model(self.configure_text_recognition)
-        model = torch.nn.DataParallel(model).to(device)
+        model = torch.nn.DataParallel(model).to(self.device)
 
         # load model
         print('loading pretrained model from %s' % self.configure_text_recognition.saved_model)
-        torch_load = torch.load(self.configure_text_recognition.saved_model, map_location=device)
+        torch_load = torch.load(self.configure_text_recognition.saved_model, map_location=self.device)
         model.load_state_dict(torch_load)
 
         # prepare data. two demo images from https://github.com/bgshih/crnn#run-demo
@@ -145,10 +145,10 @@ class DeepTextRecognition:
         with torch.no_grad():
             for image_tensors, image_path_list in demo_loader:
                 batch_size = image_tensors.size(0)
-                image = image_tensors.to(device)
+                image = image_tensors.to(self.device)
                 # For max length prediction
-                length_for_pred = torch.IntTensor([self.configure_text_recognition.batch_max_length] * batch_size).to(device)
-                text_for_pred = torch.LongTensor(batch_size, self.configure_text_recognition.batch_max_length + 1).fill_(0).to(device)
+                length_for_pred = torch.IntTensor([self.configure_text_recognition.batch_max_length] * batch_size).to(self.device)
+                text_for_pred = torch.LongTensor(batch_size, self.configure_text_recognition.batch_max_length + 1).fill_(0).to(self.device)
 
                 if 'CTC' in self.configure_text_recognition.Prediction:
                     preds = model(image, text_for_pred).log_softmax(2)
