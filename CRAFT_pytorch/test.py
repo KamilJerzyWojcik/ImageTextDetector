@@ -28,6 +28,8 @@ from .craft_utils import CraftUtils
 class CRAFTTextDetector:
 
     def __init__(self):
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        os.environ["CUDA_VISIBLE_DEVICES"]="0"
         self.args = ConfigureCRAFTPytorch(
             trained_model= '../neural_networks/CRAFT/craft_ic15_20k.pth',
             test_folder='books_images')
@@ -45,12 +47,12 @@ class CRAFTTextDetector:
         net = CRAFT()
 
         print('Loading weights from checkpoint (' + self.args.trained_model + ')')
-        if self.args.cuda:
+        if torch.cuda.device_count() > 0:
             net.load_state_dict(self.copyStateDict(torch.load(self.args.trained_model)))
         else:
             net.load_state_dict(self.copyStateDict(torch.load(self.args.trained_model, map_location='cpu')))
 
-        if self.args.cuda:
+        if torch.cuda.device_count() > 0:
             net = net.cuda()
             net = torch.nn.DataParallel(net)
             cudnn.benchmark = False
@@ -59,13 +61,11 @@ class CRAFTTextDetector:
         return net
 
     def detect_one(self, image_path=None):
-        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        os.environ["CUDA_VISIBLE_DEVICES"]="0"
         net = self.get_network()
         t = time.time()
         print("Test image: {:s}".format(image_path))
         image = self.imgproc.loadImage(image_path)
-        boxes, polys, score_text = self.test_net(net, image, self.args.text_threshold, self.args.link_threshold, self.args.low_text, self.args.cuda, self.args.poly, None)
+        boxes, polys, score_text = self.test_net(net, image, self.args.text_threshold, self.args.link_threshold, self.args.low_text, torch.cuda.device_count() > 0, self.args.poly, None)
         print("elapsed time : {}s".format(time.time() - t))
         return boxes, image
 
